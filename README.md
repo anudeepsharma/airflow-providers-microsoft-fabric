@@ -103,7 +103,18 @@ with DAG(
         deferrable=True,
     )
 
-    run_notebook
+    run_dbt = MSFabricRunItemOperator(
+        task_id="run_fabric_dbt",
+        workspace_id="<workspace_id>",
+        item_id="<dbt_item_id>",
+        fabric_conn_id="fabric_conn_id",
+        job_type="DBTItem",
+        wait_for_termination=True,
+        deferrable=True,
+        job_params='{"key": "value"}',  # Optional: JSON string with DBT parameters
+    )
+
+    run_notebook >> run_dbt
 
 ```
 Feel free to tweak and tailor this DAG to suit your needs!

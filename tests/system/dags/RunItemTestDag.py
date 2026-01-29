@@ -90,6 +90,19 @@ with DAG(
     deferrable=False,
   )
 
+  # DBT Item - Example of running a DBT transformation
+  # Note: Update workspace_id and item_id with actual DBT item values when available
+  # runDBTItem = MSFabricRunJobOperator(
+  #   task_id="runDBTItemTask",
+  #   fabric_conn_id="fabric-integration",
+  #   workspace_id="<your-workspace-id>",
+  #   item_id="<your-dbt-item-id>",
+  #   job_type="DBTItem",
+  #   timeout=60 * 10, #10 minutes
+  #   deferrable=True,
+  #   job_params='{"key": "value"}' # Optional: JSON string with DBT parameters
+  # )
+
   # User Function
   runFunction1 = MSFabricRunUserDataFunctionOperator(
     task_id="run_user_data_function1",
