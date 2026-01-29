@@ -30,7 +30,7 @@ with DAG(
   #   deferrable=True,
   #   api_host="https://dailyapi.fabric.microsoft.com")
 
-# SparkJon
+# SparkJob
   runSparkJob = MSFabricRunJobOperator(
     task_id="runSparkJobTask1_deferred",
     fabric_conn_id="fabric-integration",

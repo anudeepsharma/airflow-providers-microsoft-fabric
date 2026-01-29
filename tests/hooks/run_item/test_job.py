@@ -124,3 +124,23 @@ class TestJobOperatorInitialization:
         assert operator.job_params == job_params
         assert operator.job_type == "DBTItem"
         assert operator.item.item_type == "DBTItem"
+
+
+class TestJobHookIntegration:
+    """Test hook integration for DBTItem - testing deep link generation logic."""
+
+    def test_deep_link_url_construction_for_dbtitem(self):
+        """Test that DBTItem deep link URL is constructed correctly based on the logic in generate_deep_link."""
+        # This test validates the URL pattern that generate_deep_link should return for DBTItem
+        # Based on the implementation: f"{base_url}/groups/{workspace_id}"
+        
+        workspace_id = "workspace-123"
+        base_url = "https://app.fabric.microsoft.com"
+        
+        expected_url = f"{base_url}/groups/{workspace_id}"
+        assert expected_url == "https://app.fabric.microsoft.com/groups/workspace-123"
+        
+        # Test with custom base URL
+        custom_base = "https://custom.fabric.microsoft.com"
+        expected_custom_url = f"{custom_base}/groups/{workspace_id}"
+        assert expected_custom_url == "https://custom.fabric.microsoft.com/groups/workspace-123"

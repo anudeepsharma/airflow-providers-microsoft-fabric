@@ -24,9 +24,11 @@ class MSFabricRunJobOperator(BaseFabricRunItemOperator):
 
     @staticmethod
     def _map_job_type_for_api(job_type: str) -> str:
-        """Map user-friendly job type names to API-compatible names."""
-        """Updates this mapping should be reflected in hook generate_deep_link method."""
-        """List all suported names for clarity"""
+        """Map user-friendly job type names to API-compatible names.
+        
+        Updates to this mapping should be reflected in hook generate_deep_link method.
+        Listing all supported names for clarity.
+        """
         if job_type == "RunPipeline" or job_type == "Pipeline":
             return "Pipeline"
         elif job_type == "RunNotebook" or job_type == "Notebook":
