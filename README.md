@@ -38,9 +38,9 @@ Since custom connection forms aren't feasible in Apache Airflow plugins, use can
 This operator composes the logic for this plugin. It triggers the Fabric item run and pushes the details in Xcom. It can accept the following parameters:
 
 * `workspace_id`: The workspace Id.
-* `item_id`: The Item Id. i.e Notebook and Pipeline.
+* `item_id`: The Item Id. i.e Notebook, Pipeline, and DBT Item.
 * `fabric_conn_id`: Connection Id for Fabric.
-* `job_type`: "RunNotebook" or "Pipeline".
+* `job_type`: "RunNotebook", "Pipeline", "RunSparkJob", or "DBTItem".
 * `wait_for_termination`: (Default value: True) Wait until the run item.
 * `timeout`: int (Default value: 60 * 60 * 24 * 7). Time in seconds to wait for the pipeline or notebook. Used only if `wait_for_termination` is True.
 * `check_interval`: int (Default value: 60s). Time in seconds to wait before rechecking the refresh status.
