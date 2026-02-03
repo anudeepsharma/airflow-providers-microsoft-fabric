@@ -205,7 +205,7 @@ class MSFabricRunJobHook(BaseFabricRunItemHook):
         
     async def generate_deep_link(self, tracker: RunItemTracker, base_url: str = "https://app.fabric.microsoft.com") -> str:
         """
-        Generate deep links for job items: notebooks, pipelines, and spark jobs.
+        Generate deep links for job items: notebooks, pipelines, spark jobs, and DBT items.
         Uses the same URL patterns as MSFabricItemLink.
         
         :param tracker: RunItemTracker with run details
