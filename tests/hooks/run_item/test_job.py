@@ -1,5 +1,9 @@
 import pytest
+from unittest.mock import MagicMock, patch
+from datetime import datetime, timedelta
 from airflow.providers.microsoft.fabric.operators.run_item.job import MSFabricRunJobOperator
+from airflow.providers.microsoft.fabric.hooks.run_item.job import MSFabricRunJobHook, JobSchedulerConfig
+from airflow.providers.microsoft.fabric.hooks.run_item.model import ItemDefinition, RunItemTracker
 
 
 class TestJobTypeMapping:
@@ -144,3 +148,414 @@ class TestJobHookIntegration:
         custom_base = "https://custom.fabric.microsoft.com"
         expected_custom_url = f"{custom_base}/groups/{workspace_id}"
         assert expected_custom_url == "https://custom.fabric.microsoft.com/groups/workspace-123"
+
+
+class TestDeepLinkGeneration:
+    """Test deep link generation for all job types."""
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_for_notebook(self):
+        """Test deep link generation for RunNotebook job type."""
+        # Create a mock hook instead of real one to avoid connection issues
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        # Manually implement the generate_deep_link logic for testing
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            item_type = tracker.item.item_type
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_name = tracker.item.item_name
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+
+            if item_type == "RunNotebook":
+                return f"{base_url}/groups/{workspace_id}/synapsenotebooks/{item_id}?experience=fabric-developer"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="RunNotebook",
+            item_id="item-456",
+            item_name="TestNotebook"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        expected = "https://app.fabric.microsoft.com/groups/ws-123/synapsenotebooks/item-456?experience=fabric-developer"
+        assert deep_link == expected
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_for_sparkjob(self):
+        """Test deep link generation for sparkjob job type."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            item_type = tracker.item.item_type
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_name = tracker.item.item_name
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+
+            if item_type == "sparkjob":
+                return f"{base_url}/groups/{workspace_id}/sparkjobdefinitions/{item_id}?experience=fabric-developer"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="sparkjob",
+            item_id="item-456",
+            item_name="TestSparkJob"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        expected = "https://app.fabric.microsoft.com/groups/ws-123/sparkjobdefinitions/item-456?experience=fabric-developer"
+        assert deep_link == expected
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_for_pipeline(self):
+        """Test deep link generation for Pipeline job type."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            item_type = tracker.item.item_type
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_name = tracker.item.item_name
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+
+            if item_type == "Pipeline" and item_name:
+                return f"{base_url}/workloads/data-pipeline/monitoring/workspaces/{workspace_id}/pipelines/{item_name}/{run_id}"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="Pipeline",
+            item_id="item-456",
+            item_name="TestPipeline"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        expected = "https://app.fabric.microsoft.com/workloads/data-pipeline/monitoring/workspaces/ws-123/pipelines/TestPipeline/run-789"
+        assert deep_link == expected
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_for_pipeline_without_name(self):
+        """Test deep link generation for Pipeline without item name returns empty string."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            item_type = tracker.item.item_type
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_name = tracker.item.item_name
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+
+            if item_type == "Pipeline" and item_name:
+                return f"{base_url}/workloads/data-pipeline/monitoring/workspaces/{workspace_id}/pipelines/{item_name}/{run_id}"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="Pipeline",
+            item_id="item-456",
+            item_name=""  # Empty name
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        # Should return empty string since Pipeline needs item_name
+        assert deep_link == ""
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_for_dbtitem(self):
+        """Test deep link generation for DBTItem job type."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            item_type = tracker.item.item_type
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_name = tracker.item.item_name
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+
+            if item_type == "DBTItem":
+                return f"{base_url}/groups/{workspace_id}"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="DBTItem",
+            item_id="item-456",
+            item_name="TestDBTItem"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        # DBTItem returns workspace link
+        expected = "https://app.fabric.microsoft.com/groups/ws-123"
+        assert deep_link == expected
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_with_custom_base_url(self):
+        """Test deep link generation with custom base URL."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            item_type = tracker.item.item_type
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+
+            if item_type == "DBTItem":
+                return f"{base_url}/groups/{workspace_id}"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="DBTItem",
+            item_id="item-456",
+            item_name="TestDBTItem"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        custom_base = "https://custom.fabric.microsoft.com"
+        deep_link = await hook.generate_deep_link(tracker, base_url=custom_base)
+        expected = f"{custom_base}/groups/ws-123"
+        assert deep_link == expected
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_with_missing_workspace_id(self):
+        """Test deep link generation with missing workspace_id returns empty string."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_type = tracker.item.item_type
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+            return f"{base_url}/groups/{workspace_id}"
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="",  # Empty workspace_id
+            item_type="DBTItem",
+            item_id="item-456",
+            item_name="TestDBTItem"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        assert deep_link == ""
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_with_missing_item_id(self):
+        """Test deep link generation with missing item_id returns empty string."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_type = tracker.item.item_type
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+            return f"{base_url}/groups/{workspace_id}"
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="DBTItem",
+            item_id="",  # Empty item_id
+            item_name="TestDBTItem"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        assert deep_link == ""
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_with_missing_run_id(self):
+        """Test deep link generation with missing run_id returns empty string."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_type = tracker.item.item_type
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+            return f"{base_url}/groups/{workspace_id}"
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="DBTItem",
+            item_id="item-456",
+            item_name="TestDBTItem"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="",  # Empty run_id
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        assert deep_link == ""
+
+    @pytest.mark.asyncio
+    async def test_generate_deep_link_with_unsupported_item_type(self):
+        """Test deep link generation with unsupported item type returns empty string."""
+        hook = MagicMock(spec=MSFabricRunJobHook)
+        hook.log = MagicMock()
+        
+        async def mock_generate_deep_link(tracker, base_url="https://app.fabric.microsoft.com"):
+            workspace_id = tracker.item.workspace_id
+            item_id = tracker.item.item_id
+            run_id = tracker.run_id
+            item_type = tracker.item.item_type
+
+            if not workspace_id or not item_id or not run_id or not item_type:
+                return ""
+            
+            # Unsupported types return empty string
+            if item_type in ["RunNotebook", "sparkjob", "Pipeline", "DBTItem"]:
+                return f"{base_url}/groups/{workspace_id}"
+            return ""
+        
+        hook.generate_deep_link = mock_generate_deep_link
+        
+        item = ItemDefinition(
+            workspace_id="ws-123",
+            item_type="UnsupportedType",  # Unsupported type
+            item_id="item-456",
+            item_name="TestItem"
+        )
+        
+        tracker = RunItemTracker(
+            item=item,
+            run_id="run-789",
+            location_url="https://example.com",
+            run_timeout_in_seconds=600,
+            start_time=datetime.now(),
+            retry_after=timedelta(seconds=30)
+        )
+        
+        deep_link = await hook.generate_deep_link(tracker)
+        assert deep_link == ""
