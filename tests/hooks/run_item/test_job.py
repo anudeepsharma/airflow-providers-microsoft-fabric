@@ -136,19 +136,19 @@ class TestJobHookIntegration:
     def test_deep_link_url_construction_for_dbtitem(self):
         """Test that DBTItem deep link URL is constructed correctly based on the logic in generate_deep_link."""
         # This test validates the URL pattern that generate_deep_link should return for DBTItem
-        # Based on the implementation: f"{base_url}/groups/{workspace_id}/dbt/{item_id}?experience=data-engineering"
+        # Based on the implementation: f"{base_url}/{workspace_id}/dbtitems/{item_id}"
         
         workspace_id = "workspace-123"
         item_id = "item-456"
         base_url = "https://app.fabric.microsoft.com"
         
-        expected_url = f"{base_url}/groups/{workspace_id}/dbt/{item_id}?experience=data-engineering"
-        assert expected_url == "https://app.fabric.microsoft.com/groups/workspace-123/dbt/item-456?experience=data-engineering"
+        expected_url = f"{base_url}/{workspace_id}/dbtitems/{item_id}"
+        assert expected_url == "https://app.fabric.microsoft.com/workspace-123/dbtitems/item-456"
         
         # Test with custom base URL
         custom_base = "https://custom.fabric.microsoft.com"
-        expected_custom_url = f"{custom_base}/groups/{workspace_id}/dbt/{item_id}?experience=data-engineering"
-        assert expected_custom_url == "https://custom.fabric.microsoft.com/groups/workspace-123/dbt/item-456?experience=data-engineering"
+        expected_custom_url = f"{custom_base}/{workspace_id}/dbtitems/{item_id}"
+        assert expected_custom_url == "https://custom.fabric.microsoft.com/workspace-123/dbtitems/item-456"
 
 
 class TestDeepLinkGeneration:
@@ -341,7 +341,7 @@ class TestDeepLinkGeneration:
                 return ""
 
             if item_type == "DBTItem":
-                return f"{base_url}/groups/{workspace_id}/dbt/{item_id}?experience=data-engineering"
+                return f"{base_url}/{workspace_id}/dbtitems/{item_id}"
             return ""
         
         hook.generate_deep_link = mock_generate_deep_link
@@ -364,7 +364,7 @@ class TestDeepLinkGeneration:
         
         deep_link = await hook.generate_deep_link(tracker)
         # DBTItem returns specific DBT item link
-        expected = "https://app.fabric.microsoft.com/groups/ws-123/dbt/item-456?experience=data-engineering"
+        expected = "https://app.fabric.microsoft.com/ws-123/dbtitems/item-456"
         assert deep_link == expected
 
     @pytest.mark.asyncio
@@ -383,7 +383,7 @@ class TestDeepLinkGeneration:
                 return ""
 
             if item_type == "DBTItem":
-                return f"{base_url}/groups/{workspace_id}/dbt/{item_id}?experience=data-engineering"
+                return f"{base_url}/{workspace_id}/dbtitems/{item_id}"
             return ""
         
         hook.generate_deep_link = mock_generate_deep_link
@@ -406,7 +406,7 @@ class TestDeepLinkGeneration:
         
         custom_base = "https://custom.fabric.microsoft.com"
         deep_link = await hook.generate_deep_link(tracker, base_url=custom_base)
-        expected = f"{custom_base}/groups/ws-123/dbt/item-456?experience=data-engineering"
+        expected = f"{custom_base}/ws-123/dbtitems/item-456"
         assert deep_link == expected
 
     @pytest.mark.asyncio
