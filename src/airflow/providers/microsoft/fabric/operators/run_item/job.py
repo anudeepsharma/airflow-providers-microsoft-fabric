@@ -19,19 +19,24 @@ class MSFabricRunJobOperator(BaseFabricRunItemOperator):
     - "RunNotebook": Execute a Fabric notebook
     - "RunPipeline" or "Pipeline": Execute a Fabric data pipeline
     - "RunSparkJob" or "SparkJob": Execute a Spark job definition
+    - "DBTItem": Execute a DBT item
     """
 
     @staticmethod
     def _map_job_type_for_api(job_type: str) -> str:
-        """Map user-friendly job type names to API-compatible names."""
-        """Updates this mapping should be reflected in hook generate_deep_link method."""
-        """List all suported names for clarity"""
+        """Map user-friendly job type names to API-compatible names.
+        
+        Updates to this mapping should be reflected in hook generate_deep_link method.
+        Listing all supported names for clarity.
+        """
         if job_type == "RunPipeline" or job_type == "Pipeline":
             return "Pipeline"
         elif job_type == "RunNotebook" or job_type == "Notebook":
             return "RunNotebook" # as defined in job api
         elif job_type == "RunSparkJob" or job_type == "SparkJob":
             return "sparkjob"
+        elif job_type == "DBTItem":
+            return "DBTItem"
         return job_type
 
     # Keep template-able primitives as top-level attributes

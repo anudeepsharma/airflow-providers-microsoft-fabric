@@ -205,7 +205,7 @@ class MSFabricRunJobHook(BaseFabricRunItemHook):
         
     async def generate_deep_link(self, tracker: RunItemTracker, base_url: str = "https://app.fabric.microsoft.com") -> str:
         """
-        Generate deep links for job items: notebooks, pipelines, and spark jobs.
+        Generate deep links for job items: notebooks, pipelines, spark jobs, and DBT items.
         Uses the same URL patterns as MSFabricItemLink.
         
         :param tracker: RunItemTracker with run details
@@ -223,16 +223,20 @@ class MSFabricRunJobHook(BaseFabricRunItemHook):
 
         # Use the same URL patterns as MSFabricItemLink
         if item_type == "RunNotebook":
-            # interin solution, waiting for api to release deep link and exit value
+            # interim solution, waiting for api to release deep link and exit value
             # https://dev.azure.com/powerbi/Trident/_git/Fabric-APIs/pullrequest/713597?_a=files
             return f"{base_url}/groups/{workspace_id}/synapsenotebooks/{item_id}?experience=fabric-developer" 
         
         elif item_type == "sparkjob":
-            # interin solution while api does not report monitor url
-            return f"{base_url}/groups/{workspace_id}/sparkjobdefinitions/{item_id}?experience=fabric-developer" # interin solution
+            # interim solution while api does not report monitor url
+            return f"{base_url}/groups/{workspace_id}/sparkjobdefinitions/{item_id}?experience=fabric-developer" # interim solution
 
         elif item_type == "Pipeline" and item_name:
             return f"{base_url}/workloads/data-pipeline/monitoring/workspaces/{workspace_id}/pipelines/{item_name}/{run_id}"
+
+        elif item_type == "DBTItem":
+            # DBTItem deep link pattern
+            return f"{base_url}/{workspace_id}/dbtitems/{item_id}"
 
         else:
             self.log.warning("Unsupported item type for job hook generate_deep_link: %s", item_type)
