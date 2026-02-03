@@ -235,10 +235,8 @@ class MSFabricRunJobHook(BaseFabricRunItemHook):
             return f"{base_url}/workloads/data-pipeline/monitoring/workspaces/{workspace_id}/pipelines/{item_name}/{run_id}"
 
         elif item_type == "DBTItem":
-            # DBTItem does not have a specific deep link pattern yet
-            # Return a generic workspace link
-            self.log.info("DBTItem deep link pattern not yet available, returning workspace link")
-            return f"{base_url}/groups/{workspace_id}"
+            # DBTItem deep link pattern following Fabric URL structure
+            return f"{base_url}/groups/{workspace_id}/dbt/{item_id}?experience=data-engineering"
 
         else:
             self.log.warning("Unsupported item type for job hook generate_deep_link: %s", item_type)
